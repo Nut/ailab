@@ -147,3 +147,5 @@ dmypy.json
 
 login.txt
 # End of https://www.gitignore.io/api/python,jupyternotebook,jupyternotebooks
+
+cv/notebooks/cifar-10-batches-py/
