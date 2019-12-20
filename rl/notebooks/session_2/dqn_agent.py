@@ -14,6 +14,7 @@ from tensorflow.keras.utils import to_categorical
 
 from lib import AbstractAgent
 
+import random
 
 class DQN(AbstractAgent):
 
@@ -90,12 +91,20 @@ class DQN(AbstractAgent):
 
     def _remember(self, experience: Tuple[np.ndarray, int, np.ndarray, float, bool]) -> None:
         # Todo: Store experience in memory
-        pass
+        self.memory.append(experience)
 
     def _replay(self) -> None:
         # Todo: Get a random mini batch from memory and create numpy arrays for each part of this experience.
-        states, actions, next_states, rewards, dones = np.array([]), np.array([]), np.array([]), np.array([]), np.array(
-            [])
+        rnd_mem_idx = random.sample(range(0, len(self.memory)), self.batch_size)
+        
+        states, actions, next_states, rewards, dones = np.array([]), np.array([]), np.array([]), np.array([]), np.array([])
+        
+        for i in rnd_mem_idx:
+            states = np.append(states, self.memory[i][0])
+            actions = np.append(actions, self.memory[i][1])
+            next_states = np.append(next_states, self.memory[i][2])
+            rewards = np.append(rewards, self.memory[i][3])
+            dones = np.append(dones, self.memory[i][4])
 
         # The following assert statements are intended to support further implementation,
         # but can also be removed/adjusted if necessary.
@@ -110,17 +119,23 @@ class DQN(AbstractAgent):
         assert dones.shape == (self.batch_size,), f"Dones shape should be: {(self.batch_size,)}"
 
         # Todo: Predict the Q values of the next states. Passing ones as the action mask.
-        next_q_values = None
+        next_q_values = self.model.predict([states, np.ones(self.action_size)]) 
 
-        # Todo: Set the Q values of terminal states to 0 (by definition)
-
+       
+        
         # Todo: Calculate the Q values, remember
         #  the Q values of each non-terminal state is the reward + gamma * the max next state Q value
         # Depending on the implementation, the axis must be specified to get the max q-value for EACH batch element!
-        q_values = None
+        q_values = rewards + gamma * [max(next_q_val) for next_q_val in next_q_values]
+         
+        # Todo: Set the Q values of terminal states to 0 (by definition)
+        done_idx = np.where(dones == 1)
+        for idx in done_idx:
+            q_values[idx] = 0
 
         # Todo: Create a one hot encoding of the actions (the selected action is 1 all others 0)
-        one_hot_actions = None
+        one_hot_actions = to_categorical(actions, num_classes=self.action_size)
+        
 
         # Todo: Create the target Q values based on the one hot encoding of the actions and the calculated q-values
         target_q_values = None
