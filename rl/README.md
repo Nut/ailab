@@ -28,7 +28,14 @@ Jupyter Notebook inkl. TensorBoard starten:
 docker-compose up ai-lab-rl-gpu
 ```
 
+### Ohne docker-compose
+
+```bash
+docker run -it --rm -v $PWD:/rl -p 8888:8888 --gpus all ai-lab-hska-rl_ai-lab-rl-gpu
+```
+
 ### System ohne h264 und co
+
 Miniconda herunterladen und installieren:
 ```bash
 bash get_miniconda.sh
@@ -80,8 +87,15 @@ Im Browser `http://localhost:6006` aufrufen.
 jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace Notebook.ipynb
 ```
 
+### Package als root temporär in vorhandenem Container installieren
+
+```bash
+docker exec -u 0 -it <container_id> /bin/bash
+```
+
 ## Weiterführende Lektüre
 
 - "Standard"-Lektüre für den Einstieg in RL: [Reinforcement Learning: An Introduction (Richard S. Sutton and Andrew G. Barto)](http://incompleteideas.net/book/RLbook2018.pdf)
 - Ausführlich und gut erklärter Einstieg in RL (Video-Lektionen) von David Silver (Google DeepMind): [UCL Course on RL (David Silver)](http://www0.cs.ucl.ac.uk/staff/D.Silver/web/Teaching.html)
 - [Algorithms in Reinforcement Learning (Csaba Szepesvári)](https://sites.ualberta.ca/~szepesva/papers/RLAlgsInMDPs.pdf)
+- Blog mit Videos zum Einstieg in RL und Q-Learning, DQN und vieles mehr: [Reinforcement Learning - Introducing Goal Oriented Intelligence](https://deeplizard.com/learn/video/nyjbcRQ-uQ8)
