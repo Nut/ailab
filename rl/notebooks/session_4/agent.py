@@ -141,11 +141,12 @@ class AtariDQN(AbstractAgent):
         # Todo: Convert the parts of the mini-batch into corresponding numpy arrays.
         #  Note that the states are of type 'LazyFrames' due to memory efficiency
         #  and must therefore be converted individually.
-        states = None
-        next_states = None
-        actions = None
-        rewards = None
-        dones = None
+        states = np.array([np.array(state) for state in states])
+        next_states = np.array([np.array(state) for state in next_states])
+        
+        actions = np.array(actions)
+        rewards = np.array(rewards)
+        dones = np.array(dones)
 
         # The following assert statements are intended to support further implementation,
         #  but can also be removed/adjusted if necessary.
@@ -161,26 +162,26 @@ class AtariDQN(AbstractAgent):
 
         # Todo: Predict the Q values of the next states (choose the right model!). Passing ones as the action mask
         #  Note that a suitable mask has already been created in '__init__'.
-        next_q_values = None
+        next_q_values = self.target_model.predict([next_states, np.ones((self.batch_size, self.action_size))]) 
 
         # Todo: Calculate the Q values, remember
         #  - the Q values of each non-terminal state is the reward + gamma * the max next state Q value
         #  - and the Q values of terminal states should be the reward (Hint: 1.0 - dones) makes sure that if the game is
         #    over, targetQ = rewards
         # Depending on the implementation, the axis must be specified to get the max q-value for EACH batch element!
-        q_values = None
+        q_values = rewards + self.gamma * np.max(next_q_values, axis=1)
 
         # Todo: Create a one hot encoding of the actions (the selected action is 1 all others 0)
         #  Hint look at the imports. A Keras help function will be imported there.
-        one_hot_actions = None
+        one_hot_actions = to_categorical(actions, num_classes=self.action_size)
 
         # Todo: Create the target Q values based on the one hot encoding of the actions and the calculated q-values
         #  Hint you have to "reshape" the q_values to match the shape
-        target_q_values = None
+        target_q_values = q_values.reshape(self.batch_size, 1) * one_hot_actions
 
         self.model.fit(
-            x=None,  # states and mask
-            y=None,  # target Q values
+            x=[states, one_hot_actions],  # states and mask
+            y=target_q_values,  # target Q values
             batch_size=self.batch_size,
             verbose=0
         )
@@ -202,8 +203,7 @@ class AtariDQN(AbstractAgent):
         else:
             # Todo: Use the model to get the Q values for the state and determine the action based on the max Q value.
             #  Hint: You have to convert the state to a list of numpy arrays before you can pass it to the model
-            q_values = None
-            action = 1
+            action = np.argmax(self.model.predict([[np.array(state)], np.ones((1,self.action_size))]))
         return action
 
     def train(self, experience: Tuple[LazyFrames, int, LazyFrames, float, bool]) -> None:
@@ -221,7 +221,13 @@ class AtariDQN(AbstractAgent):
         #  - Update epsilon as long as it is not minimal
         #  - update weights of the target model (syn of the two models)
         #  - execute replay
-
+        if (self.step > self.start_replay_step):
+            self.epsilon = max(self.epsilon - self.epsilon_decay, self.epsilon_min)
+            
+            if (self.step % self.target_model_update_interval == 0):
+                self.target_model.set_weights(self.model.get_weights())
+            
+            self._replay()
         self.step += 1
 
 
